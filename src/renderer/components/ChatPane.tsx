@@ -1,6 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { Box, TextField, IconButton, Paper, CircularProgress } from '@mui/material';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  Box, 
+  TextField, 
+  IconButton, 
+  Paper, 
+  CircularProgress,
+  Tooltip
+} from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { v4 as uuidv4 } from 'uuid';
 import ChatMessage from './ChatMessage';
 import { useChatStore } from '../store';
@@ -9,8 +17,22 @@ import { createChatCompletion } from '../utils/openai';
 const ChatPane: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const { messages, addMessage, updateMessage, settings } = useChatStore();
+  const { messages, addMessage, updateMessage, settings, clearMessages } = useChatStore();
   const streamContentRef = useRef('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]); // 消息变化时滚动到底部
+
+  const handleClear = () => {
+    if (isStreaming) return;
+    clearMessages();
+  };
 
   const handleSend = async () => {
     if (!inputMessage.trim() || isStreaming) return;
@@ -79,12 +101,41 @@ const ChatPane: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
-      <Box sx={{ flexGrow: 1, overflow: 'auto', mb: 2 }}>
+      <Box sx={{ 
+        flexGrow: 1, 
+        overflow: 'auto', 
+        mb: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2
+      }}>
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
+        <div ref={messagesEndRef} />
       </Box>
-      <Paper elevation={3} sx={{ p: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 2, 
+          display: 'flex', 
+          gap: 1, 
+          alignItems: 'center',
+          position: 'relative'
+        }}
+      >
+        {messages.length > 0 && (
+          <Tooltip title="清除聊天记录" placement="top">
+            <IconButton
+              size="small"
+              onClick={handleClear}
+              disabled={isStreaming}
+              sx={{ position: 'absolute', top: -40, right: 0 }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
         <TextField
           fullWidth
           multiline
