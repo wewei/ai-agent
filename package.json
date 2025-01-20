@@ -2,24 +2,30 @@
   "name": "electron-ai-chat",
   "version": "1.0.0",
   "description": "AI Chat Bot built with Electron",
-  "main": "dist/main/main.js",
+  "main": "dist/main/main/index.js",
   "scripts": {
-    "dev": "concurrently -k \"npm run dev:renderer\" \"wait-on tcp:3000 -v --timeout 3000 && npm run dev:main\"",
-    "dev:main": "tsc -p electron/tsconfig.json && cross-env NODE_ENV=development electron .",
+    "clean": "rimraf dist",
+    "dev": "npm run clean && concurrently -k \"npm run dev:renderer\" \"wait-on tcp:3000 -v --timeout 3000 && npm run dev:main\"",
+    "dev:main": "tsc -p src/main/tsconfig.json && cross-env NODE_ENV=development electron .",
     "dev:renderer": "cross-env NODE_ENV=development vite",
     "start": "cross-env NODE_ENV=production electron .",
-    "build": "npm run build:main && npm run build:renderer",
-    "build:main": "tsc -p electron/tsconfig.json",
+    "build": "npm run clean && npm run build:main && npm run build:renderer",
+    "build:main": "tsc -p src/main/tsconfig.json",
     "build:renderer": "cross-env NODE_ENV=production vite build",
-    "watch": "tsc -p electron/tsconfig.json -w"
+    "watch": "tsc -p src/main/tsconfig.json -w"
   },
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
-    "@mui/material": "^5.13.0",
     "@mui/icons-material": "^5.11.16",
+    "@mui/material": "^5.13.0",
+    "eventsource-parser": "^1.1.1",
+    "idb": "^8.0.0",
+    "openai": "^4.79.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "uuid": "^11.0.5",
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
@@ -30,6 +36,7 @@
     "electron": "^24.3.0",
     "typescript": "^5.0.4",
     "vite": "^4.3.5",
-    "wait-on": "^8.0.2"
+    "wait-on": "^8.0.2",
+    "rimraf": "^5.0.5"
   }
 }

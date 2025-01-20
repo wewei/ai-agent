@@ -1,13 +1,15 @@
-import { app, BrowserWindow } from 'electron';
-import path from 'path';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import * as path from 'path';
+import { OpenAIService } from './services/openai';
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 
@@ -37,5 +39,22 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+const openAIService = new OpenAIService();
+
+ipcMain.handle('chat:completion', async (event, { settings, messages }) => {
+  try {
+    const stream = openAIService.createChatCompletion(settings, messages);
+    for await (const chunk of stream) {
+      console.log(chunk);
+      event.sender.send('chat:chunk', chunk);
+    }
+    console.log('chat:done');
+    event.sender.send('chat:done');
+  } catch (error) {
+    console.log('chat:error');
+    event.sender.send('chat:error', error);
   }
 }); 

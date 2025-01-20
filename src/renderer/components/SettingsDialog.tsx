@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
+import { ChatSettings, DeepseekSettings, useChatStore } from '../store';
+import { OpenAISettingsView } from './settings/OpenAISettings';
+import { AzureOpenAISettingsView } from './settings/AzureOpenAISettings';
+import { DeepseekSettingsView } from './settings/DeepseekSettings';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -18,34 +21,70 @@ interface SettingsDialogProps {
 }
 
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
+  const { settings, updateSettings } = useChatStore();
+
+  const handleSave = () => {
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose}>
       <DialogTitle>设置</DialogTitle>
       <DialogContent>
         <FormControl fullWidth sx={{ mt: 2 }}>
-          <TextField
-            label="API Key"
-            type="password"
-            fullWidth
-            margin="normal"
-          />
-        </FormControl>
-        <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel>模型</InputLabel>
+          <InputLabel>AI 提供商</InputLabel>
           <Select
-            label="模型"
-            value="gpt-3.5-turbo"
+            value={settings.chatSettings.provider || 'openAI'}
+            label="AI 提供商"
+            onChange={(e) => updateSettings({
+              chatSettings: {
+                ...settings.chatSettings,
+                provider: e.target.value as ChatSettings['provider']
+              }
+            })}
           >
-            <MenuItem value="gpt-3.5-turbo">GPT-3.5-Turbo</MenuItem>
-            <MenuItem value="gpt-4">GPT-4</MenuItem>
+            <MenuItem value="openAI">OpenAI</MenuItem>
+            <MenuItem value="azureOpenAI">Azure OpenAI</MenuItem>
+            <MenuItem value="deepseek">Deepseek</MenuItem>
           </Select>
         </FormControl>
+
+        {settings.chatSettings.provider === 'openAI' && (
+          <OpenAISettingsView chatSettings={settings.chatSettings.openAISettings} updateChatSettings={(openAISettings) => {
+            updateSettings({
+              chatSettings: {
+                ...settings.chatSettings,
+                openAISettings
+              }
+            });
+          }} />
+        )}
+
+        {settings.chatSettings.provider === 'azureOpenAI' && (
+          <AzureOpenAISettingsView chatSettings={settings.chatSettings.azureOpenAISettings} updateChatSettings={(azureOpenAISettings) => {
+            updateSettings({
+              chatSettings: {
+                ...settings.chatSettings,
+                azureOpenAISettings
+              }
+            });
+          }} />
+        )}
+
+        {settings.chatSettings.provider === 'deepseek' && (
+          <DeepseekSettingsView chatSettings={settings.chatSettings.deepseekSettings} updateChatSettings={(deepseekSettings) => {
+            updateSettings({
+              chatSettings: {
+                ...settings.chatSettings,
+                deepseekSettings
+              }
+            });
+          }} />
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>取消</Button>
-        <Button onClick={onClose} variant="contained">
-          保存
-        </Button>
+        <Button onClick={handleSave}>保存</Button>
       </DialogActions>
     </Dialog>
   );
