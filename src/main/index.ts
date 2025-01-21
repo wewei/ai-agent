@@ -48,13 +48,10 @@ ipcMain.handle('chat:completion', async (event, { settings, messages }) => {
   try {
     const stream = openAIService.createChatCompletion(settings, messages);
     for await (const chunk of stream) {
-      console.log(chunk);
       event.sender.send('chat:chunk', chunk);
     }
-    console.log('chat:done');
     event.sender.send('chat:done');
   } catch (error) {
-    console.log('chat:error');
     event.sender.send('chat:error', error);
   }
 }); 

@@ -32,8 +32,6 @@ export class OpenAIService {
     const client = this.getClient(settings);
     const model = settings[`${settings.provider}Settings`].model;
 
-    console.log(messages);
-
     const stream = await client.chat.completions.create({
       model,
       messages,
