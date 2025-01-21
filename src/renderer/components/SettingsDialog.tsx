@@ -10,11 +10,11 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { ChatSettings, DeepseekSettings, useChatStore } from '../store';
+import { ChatSettings, useChatStore } from '../store';
 import { OpenAISettingsView } from './settings/OpenAISettings';
 import { AzureOpenAISettingsView } from './settings/AzureOpenAISettings';
 import { DeepseekSettingsView } from './settings/DeepseekSettings';
-
+import { SearchSettingsView } from './settings/SearchSettingsView';
 interface SettingsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -34,14 +34,17 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
         <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel>AI 提供商</InputLabel>
           <Select
-            value={settings.chatSettings.provider || 'openAI'}
+            value={settings.chatSettings.provider || "openAI"}
             label="AI 提供商"
-            onChange={(e) => updateSettings({
-              chatSettings: {
-                ...settings.chatSettings,
-                provider: e.target.value as ChatSettings['provider']
-              }
-            })}
+            onChange={(e) =>
+              updateSettings({
+                ...settings,
+                chatSettings: {
+                  ...settings.chatSettings,
+                  provider: e.target.value as ChatSettings["provider"],
+                },
+              })
+            }
           >
             <MenuItem value="openAI">OpenAI</MenuItem>
             <MenuItem value="azureOpenAI">Azure OpenAI</MenuItem>
@@ -49,38 +52,60 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           </Select>
         </FormControl>
 
-        {settings.chatSettings.provider === 'openAI' && (
-          <OpenAISettingsView chatSettings={settings.chatSettings.openAISettings} updateChatSettings={(openAISettings) => {
-            updateSettings({
-              chatSettings: {
-                ...settings.chatSettings,
-                openAISettings
-              }
-            });
-          }} />
+        {settings.chatSettings.provider === "openAI" && (
+          <OpenAISettingsView
+            chatSettings={settings.chatSettings.openAISettings}
+            updateChatSettings={(openAISettings) => {
+              updateSettings({
+                ...settings,
+                chatSettings: {
+                  ...settings.chatSettings,
+                  openAISettings,
+                },
+              });
+            }}
+          />
         )}
 
-        {settings.chatSettings.provider === 'azureOpenAI' && (
-          <AzureOpenAISettingsView chatSettings={settings.chatSettings.azureOpenAISettings} updateChatSettings={(azureOpenAISettings) => {
-            updateSettings({
-              chatSettings: {
-                ...settings.chatSettings,
-                azureOpenAISettings
-              }
-            });
-          }} />
+        {settings.chatSettings.provider === "azureOpenAI" && (
+          <AzureOpenAISettingsView
+            chatSettings={settings.chatSettings.azureOpenAISettings}
+            updateChatSettings={(azureOpenAISettings) => {
+              updateSettings({
+                ...settings,
+                chatSettings: {
+                  ...settings.chatSettings,
+                  azureOpenAISettings,
+                },
+              });
+            }}
+          />
         )}
 
-        {settings.chatSettings.provider === 'deepseek' && (
-          <DeepseekSettingsView chatSettings={settings.chatSettings.deepseekSettings} updateChatSettings={(deepseekSettings) => {
-            updateSettings({
-              chatSettings: {
-                ...settings.chatSettings,
-                deepseekSettings
-              }
-            });
-          }} />
+        {settings.chatSettings.provider === "deepseek" && (
+          <DeepseekSettingsView
+            chatSettings={settings.chatSettings.deepseekSettings}
+            updateChatSettings={(deepseekSettings) => {
+              updateSettings({
+                ...settings,
+                chatSettings: {
+                  ...settings.chatSettings,
+                  deepseekSettings,
+                },
+              });
+            }}
+          />
         )}
+
+        <SearchSettingsView
+          searchSettings={settings.searchSettings}
+          updateSearchSettings={(searchSettings) => {
+            updateSettings({
+              ...settings,
+              searchSettings,
+            });
+          }}
+        />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>取消</Button>
