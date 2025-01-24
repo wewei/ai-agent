@@ -17,6 +17,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
+    "@heroicons/react": "^2.2.0",
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.13.0",
     "eventsource-parser": "^1.1.1",
@@ -26,6 +27,8 @@
     "react-dom": "^18.2.0",
     "react-markdown": "^9.0.3",
     "remark-gfm": "^4.0.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
     "uuid": "^11.0.5",
     "zustand": "^4.5.0"
   },
@@ -35,7 +38,7 @@
     "@vitejs/plugin-react": "^4.0.0",
     "concurrently": "^8.0.1",
     "cross-env": "^7.0.3",
-    "electron": "^24.3.0",
+    "electron": "^24.8.8",
     "rimraf": "^5.0.5",
     "typescript": "^5.0.4",
     "vite": "^4.3.5",

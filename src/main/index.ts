@@ -44,9 +44,9 @@ app.on('window-all-closed', () => {
 
 const openAIService = new OpenAIService();
 
-ipcMain.handle('chat:completion', async (event, { settings, messages }) => {
+ipcMain.handle('chat:completion-stream', async (event, { settings, messages }) => {
   try {
-    const stream = openAIService.createChatCompletion(settings, messages);
+    const stream = openAIService.createChatCompletionStream(settings, messages);
     for await (const chunk of stream) {
       event.sender.send('chat:chunk', chunk);
     }
@@ -55,3 +55,7 @@ ipcMain.handle('chat:completion', async (event, { settings, messages }) => {
     event.sender.send('chat:error', error);
   }
 }); 
+
+ipcMain.handle('chat:completion', async (event, { settings, messages }) => {
+  return await openAIService.createChatCompletion(settings, messages);
+});

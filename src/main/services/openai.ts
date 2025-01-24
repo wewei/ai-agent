@@ -28,7 +28,7 @@ export class OpenAIService {
     });
   }
 
-  async *createChatCompletion(settings: ChatSettings, messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>) {
+  async *createChatCompletionStream(settings: ChatSettings, messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>) {
     const client = this.getClient(settings);
     const model = settings[`${settings.provider}Settings`].model;
 
@@ -44,4 +44,15 @@ export class OpenAIService {
       }
     }
   }
+
+  async createChatCompletion(settings: ChatSettings, messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>) {
+    const client = this.getClient(settings);
+    return await client.chat.completions.create({
+      model: settings[`${settings.provider}Settings`].model,
+      messages,
+      temperature: 0.7,
+      max_tokens: 50
+    });
+  }
+
 } 

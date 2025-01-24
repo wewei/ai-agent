@@ -1,9 +1,11 @@
 import { ChatSettings } from '../../shared/types';
+import openai from 'openai';
 
 declare global {
   interface Window {
     electronAPI: {
-      sendChatCompletion: (payload: any) => Promise<void>;
+      sendChatCompletionStream: (payload: any) => Promise<void>;
+      sendChatCompletion: (payload: any) => Promise<openai.ChatCompletion>;
       onChatChunk: (callback: (chunk: string) => void) => () => void;
       onChatDone: (callback: () => void) => () => void;
       onChatError: (callback: (error: string) => void) => () => void;
@@ -11,7 +13,7 @@ declare global {
   }
 }
 
-export const createChatCompletion = async (
+export const createChatCompletionStream = async (
   settings: ChatSettings,
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
   onChunk: (chunk: string) => void,
@@ -35,11 +37,24 @@ export const createChatCompletion = async (
   };
 
   try {
-    await window.electronAPI.sendChatCompletion({ settings, messages });
+    await window.electronAPI.sendChatCompletionStream({ settings, messages });
   } catch (error) {
     onError(error as string);
     cleanup();
   }
 
   return cleanup;
+};
+
+export const createChatCompletion = async (
+  settings: ChatSettings,
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
+): Promise<string | null> => {
+  try {
+    const response = await window.electronAPI.sendChatCompletion({ settings, messages });
+    return response?.choices?.[0]?.message?.content || null;
+  } catch (error) {
+    console.error('Chat completion error:', error);
+    return null;
+  }
 };

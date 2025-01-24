@@ -12,14 +12,20 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { v4 as uuidv4 } from 'uuid';
 import ChatMessage from './ChatMessage';
 import { useChatStore } from '../store';
-import { createChatCompletion } from '../utils/openai';
+import { createChatCompletionStream, createChatCompletion } from '../utils/openai';
 
-const ChatPane: React.FC = () => {
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+const ChatPane: React.FC<{ setTopic: (topic: string) => void }> = ({ setTopic }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const { messages, addMessage, updateMessage, settings, clearMessages } = useChatStore();
   const streamContentRef = useRef('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [currentTopic, setCurrentTopic] = useState<string>('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,6 +34,37 @@ const ChatPane: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]); // 消息变化时滚动到底部
+
+  // 检测主题变化的函数
+  const detectTopicChange = async (userMessage: string) => {
+    // 构造主题检测的 prompt
+    const prompt = `
+      请分析用户的最新消息是否表示话题的转变。如果是新话题，请用一句简短的话概括新话题（不超过15个字），如果是同一话题则返回空字符串。
+      只返回主题或空字符串，不要返回其他内容。
+      
+      最新消息：${userMessage}
+      当前主题：${currentTopic}
+    `;
+
+    try {
+      const response = await createChatCompletion(
+        settings.chatSettings,
+        [{ role: 'user', content: prompt }]
+      );
+
+      if (response) {
+        const newTopic = response.trim();
+        if (newTopic && newTopic !== currentTopic) {
+          setCurrentTopic(newTopic);
+          setTopic(newTopic);
+        }
+      }
+      console.log(response);
+      
+    } catch (error) {
+      console.error('主题检测失败:', error);
+    }
+  };
 
   const handleClear = () => {
     if (isStreaming) return;
@@ -52,6 +89,9 @@ const ChatPane: React.FC = () => {
       timestamp: new Date()
     });
 
+    // 检测主题变化
+    await detectTopicChange(userMessage);
+
     // 添加助手消息（初始为空）
     addMessage({
       id: assistantMessageId,
@@ -69,7 +109,7 @@ const ChatPane: React.FC = () => {
         content: msg.content
       }));
 
-      createChatCompletion(
+      createChatCompletionStream(
         settings.chatSettings,
         [...chatMessages, { role: 'user' as const, content: userMessage }],
         (chunk) => {
@@ -100,14 +140,19 @@ const ChatPane: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100%', 
+      p: 1  // 减小内边距
+    }}>
       <Box sx={{ 
         flexGrow: 1, 
         overflow: 'auto', 
-        mb: 2,
+        mb: 1,  // 减小底部间距
         display: 'flex',
         flexDirection: 'column',
-        gap: 2
+        gap: 1   // 减小消息间距
       }}>
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
@@ -117,9 +162,9 @@ const ChatPane: React.FC = () => {
       <Paper 
         elevation={3} 
         sx={{ 
-          p: 2, 
+          p: 1,  // 减小内边距
           display: 'flex', 
-          gap: 1, 
+          gap: 0.5,  // 减小元素间距
           alignItems: 'center',
           position: 'relative'
         }}
@@ -130,9 +175,9 @@ const ChatPane: React.FC = () => {
               size="small"
               onClick={handleClear}
               disabled={isStreaming}
-              sx={{ position: 'absolute', top: -40, right: 0 }}
+              sx={{ position: 'absolute', top: -32, right: 0 }}
             >
-              <DeleteIcon />
+              <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
@@ -140,19 +185,29 @@ const ChatPane: React.FC = () => {
           fullWidth
           multiline
           maxRows={4}
+          size="small"  // 使用小号输入框
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder="输入消息..."
           variant="outlined"
           disabled={isStreaming}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              fontSize: '0.9rem',  // 减小字体大小
+            }
+          }}
         />
         <IconButton 
+          size="small"  // 使用小号按钮
           color="primary" 
           onClick={handleSend}
           disabled={!inputMessage.trim() || isStreaming}
         >
-          {isStreaming ? <CircularProgress size={24} /> : <SendIcon />}
+          {isStreaming ? 
+            <CircularProgress size={20} /> : 
+            <SendIcon fontSize="small" />
+          }
         </IconButton>
       </Paper>
     </Box>

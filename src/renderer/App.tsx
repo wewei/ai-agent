@@ -1,20 +1,11 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  TextField,
-  IconButton,
-  Paper,
-  CircularProgress,
-} from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
 import Layout from './components/Layout';
-import ChatMessage from './components/ChatMessage';
 import SettingsDialog from './components/SettingsDialog';
-import { useChatStore } from './store';
 import ChatPane from './components/ChatPane';
 
 const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [topic, setTopic] = useState<string>('');
 
   const handleOpenSettings = () => {
     setIsSettingsOpen(true);
@@ -25,8 +16,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout onOpenSettings={handleOpenSettings}>
-      <ChatPane />
+    <Layout onOpenSettings={handleOpenSettings} title={topic}>
+      <ChatPane setTopic={setTopic} />
       <SettingsDialog 
         open={isSettingsOpen}
         onClose={handleCloseSettings}

@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  sendChatCompletion: (payload: any) => ipcRenderer.invoke('chat:completion', payload),
+  sendChatCompletionStream: (payload: any) => ipcRenderer.invoke('chat:completion-stream', payload),
   onChatChunk: (callback: (chunk: string) => void) => {
     const handler = (_event: any, chunk: string) => callback(chunk);
     ipcRenderer.on('chat:chunk', handler);
@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_event: any, error: string) => callback(error);
     ipcRenderer.on('chat:error', handler);
     return () => ipcRenderer.removeListener('chat:error', handler);
-  }
+  },
+  sendChatCompletion: (payload: any) => ipcRenderer.invoke('chat:completion', payload),
 }); 
