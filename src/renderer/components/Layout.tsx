@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, AppBar, Toolbar, Typography, IconButton, alpha, useTheme, useMediaQuery } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,7 @@ const CHAT_PANE_WIDTH = 350; // ChatPane 的固定宽度
 
 const Layout: React.FC<LayoutProps> = ({ children, onOpenSettings, title }) => {
   const [isSidepaneOpen, setIsSidepaneOpen] = useState(false);
+  const sidepaneRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); // 900px
 
@@ -22,6 +25,26 @@ const Layout: React.FC<LayoutProps> = ({ children, onOpenSettings, title }) => {
       setIsSidepaneOpen(false);
     }
   }, [isMobile]);
+
+  // 处理点击外部关闭 - 仅在移动端时启用
+  useEffect(() => {
+    if (!isMobile) return; // 仅在移动端时启用点击外部关闭
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isSidepaneOpen &&
+        sidepaneRef.current &&
+        !sidepaneRef.current.contains(event.target as Node)
+      ) {
+        setIsSidepaneOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSidepaneOpen, isMobile]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -76,28 +99,74 @@ const Layout: React.FC<LayoutProps> = ({ children, onOpenSettings, title }) => {
           width: !isMobile && isSidepaneOpen ? CHAT_PANE_WIDTH : '100%',
           flexShrink: 0,
           transition: 'width 0.3s ease',
-          borderRight: 1,
+          borderRight: !isMobile && isSidepaneOpen ? 1 : 0,
           borderColor: 'divider',
+          position: 'relative',
+          zIndex: 1,
         }}>
           {children}
         </Box>
-        <Box sx={{
-          position: isMobile ? 'fixed' : 'relative',
-          width: isMobile ? '100%' : 'auto',
-          height: isMobile ? '100%' : 'auto',
-          right: isMobile ? (isSidepaneOpen ? 0 : '-100%') : 'auto',
-          top: isMobile ? 0 : 'auto',
-          bottom: 0,
-          flexGrow: isMobile ? 0 : 1,
-          display: !isMobile ? (isSidepaneOpen ? 'block' : 'none') : 'block',
-          bgcolor: 'background.paper',
-          overflow: 'auto',
-          transition: 'right 0.3s ease',
-          zIndex: theme.zIndex.drawer,
-          boxShadow: isMobile ? theme.shadows[8] : 'none',
-          borderLeft: isMobile ? 0 : 1,
-          borderColor: 'divider',
-        }}>
+        {/* 背景遮罩 - 仅在移动端显示 */}
+        {isMobile && isSidepaneOpen && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              bgcolor: 'rgba(0, 0, 0, 0.3)',
+              zIndex: theme.zIndex.drawer - 1,
+            }}
+          />
+        )}
+        <Box
+          ref={sidepaneRef}
+          sx={{
+            position: isMobile ? 'fixed' : 'relative',
+            height: '100%',
+            ...(isMobile ? {
+              right: isSidepaneOpen ? 0 : '-85%',
+              width: '85%',
+            } : {
+              flexGrow: 1,
+              display: isSidepaneOpen ? 'block' : 'none',
+            }),
+            top: 0,
+            bottom: 0,
+            bgcolor: 'background.paper',
+            overflow: 'auto',
+            transition: 'right 0.3s ease',
+            zIndex: theme.zIndex.drawer,
+            boxShadow: isMobile ? theme.shadows[8] : 'none',
+            borderLeft: 1,
+            borderColor: 'divider',
+          }}
+        >
+          {/* 折叠按钮 */}
+          {!isMobile && (
+            <IconButton
+              onClick={() => setIsSidepaneOpen(!isSidepaneOpen)}
+              sx={{
+                position: 'absolute',
+                left: -20,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+                zIndex: theme.zIndex.drawer + 1,
+              }}
+            >
+              {isSidepaneOpen ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+            </IconButton>
+          )}
           {/* 移动端时添加顶部工具栏 */}
           {isMobile && (
             <Box sx={{ 
@@ -124,21 +193,6 @@ const Layout: React.FC<LayoutProps> = ({ children, onOpenSettings, title }) => {
             侧边栏内容
           </Box>
         </Box>
-        {/* 移动端时的遮罩层 */}
-        {isMobile && isSidepaneOpen && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              bgcolor: 'rgba(0, 0, 0, 0.5)',
-              zIndex: theme.zIndex.drawer - 1,
-            }}
-            onClick={() => setIsSidepaneOpen(false)}
-          />
-        )}
       </Box>
     </Box>
   );
